@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <project default="jar" name="Wurm Unlimited Mod Launcher">
 	
-	<property name="mods" value=""/>
+	<property name="mods" value="serverpacks"/>
 
 	<taskdef resource="net/sf/antcontrib/antcontrib.properties">
 		<classpath>
