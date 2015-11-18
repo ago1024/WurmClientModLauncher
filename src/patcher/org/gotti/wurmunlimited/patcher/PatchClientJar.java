@@ -28,10 +28,10 @@ public class PatchClientJar {
 		
 		Path clientJar = Paths.get("client.jar");
 		try (FileSystem clientFS = FileSystems.newFileSystem(URI.create("jar:" + clientJar.toUri()), new HashMap<>())) {
-			Path path = clientFS.getPath("com/wumronline/client/WurmClientBase.class");
+			Path path = clientFS.getPath("com/wurmonline/client/WurmClientBase.class");
 			if (Files.exists(path)) {
 				logger.info("client.jar contains Wurm Unlimited class files. Moving to client-patched.jar");
-				Files.move(Paths.get("client.jar"), Paths.get("client-patched.jar"), StandardCopyOption.REPLACE_EXISTING);
+				Files.copy(Paths.get("client.jar"), Paths.get("client-patched.jar"), StandardCopyOption.REPLACE_EXISTING);
 			}
 		}
 		Files.copy(Paths.get("modlauncher.jar"), Paths.get("client.jar"), StandardCopyOption.REPLACE_EXISTING);
