@@ -8,14 +8,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import javassist.CtClass;
-import javassist.NotFoundException;
-import javassist.bytecode.Descriptor;
 
 import org.gotti.wurmunlimited.modloader.ReflectionUtil;
 import org.gotti.wurmunlimited.modloader.classhooks.HookException;
@@ -25,7 +23,15 @@ import org.gotti.wurmunlimited.modloader.interfaces.Initable;
 import org.gotti.wurmunlimited.modloader.interfaces.WurmMod;
 
 import com.wurmonline.client.WurmClientBase;
+import com.wurmonline.client.resources.ResourceUrl;
 import com.wurmonline.client.resources.Resources;
+import com.wurmonline.client.resources.textures.IconLoader;
+import com.wurmonline.client.resources.textures.ResourceTextureLoader;
+import com.wurmonline.shared.constants.IconConstants;
+
+import javassist.CtClass;
+import javassist.NotFoundException;
+import javassist.bytecode.Descriptor;
 
 
 public class ServerPacksMod implements WurmMod, Initable {
@@ -112,6 +118,37 @@ public class ServerPacksMod implements WurmMod, Initable {
 		}
 	}
 
+	private void reloadPacks() throws Exception {
+		Resources resources = WurmClientBase.getResourceManager();
+
+		Set<String> unresolved = ReflectionUtil.<Set<String>>getPrivateField(resources, ReflectionUtil.getField(Resources.class, "unresolvedResources"));
+		Map<String, ResourceUrl> resolved = ReflectionUtil.<Map<String, ResourceUrl>>getPrivateField(resources, ReflectionUtil.getField(Resources.class, "resolvedResources"));
+		
+		Map<String, ResourceUrl> oldResolved = new HashMap<>(resolved);
+		unresolved.clear();
+		resolved.clear();
+		
+		boolean reloadIcons = false;
+		for (java.util.Map.Entry<String, ResourceUrl> entry : oldResolved.entrySet()) {
+			
+			ResourceUrl oldUrl = entry.getValue();
+			ResourceUrl newUrl = resources.getResource(entry.getKey());
+			
+			if (newUrl != null && !newUrl.equals(oldUrl)) {
+				
+				if (Arrays.asList(IconConstants.ICON_SHEET_FILE_NAMES).contains(entry.getKey())) {
+					reloadIcons = true;
+				} else {
+					ResourceTextureLoader.reload(oldUrl, newUrl);
+				}
+			}
+		}
+		
+		if (reloadIcons) {
+			IconLoader.initIcons();
+			IconLoader.clear();
+		}
+	}
 
 	private void enableDownloadedPack(String packId) {
 		try {
@@ -135,11 +172,10 @@ public class ServerPacksMod implements WurmMod, Initable {
 				init.invoke(jarPack, resources);
 				
 				List<Object> packs = ReflectionUtil.<List<Object>>getPrivateField(resources, ReflectionUtil.getField(Resources.class, "packs"));
-				Set<String> unresolved = ReflectionUtil.<Set<String>>getPrivateField(resources, ReflectionUtil.getField(Resources.class, "unresolvedResources"));
 				
 				synchronized (resources) {
 					packs.add(jarPack);
-					unresolved.clear();
+					reloadPacks();
 				}
 				
 			} finally {
