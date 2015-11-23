@@ -29,6 +29,7 @@ import com.wurmonline.client.resources.textures.IconLoader;
 import com.wurmonline.client.resources.textures.ResourceTextureLoader;
 import com.wurmonline.shared.constants.IconConstants;
 
+import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.NotFoundException;
 import javassist.bytecode.Descriptor;
@@ -44,12 +45,13 @@ public class ServerPacksMod implements WurmMod, Initable {
 		try {
 			//com.wurmonline.client.renderer.gui.ChatManagerManager.textMessage(String, float, float, float, String, boolean)
 			
+			ClassPool classPool = HookManager.getInstance().getClassPool();
 			String descriptor = Descriptor.ofMethod(CtClass.voidType, new CtClass[] {
-					HookManager.getInstance().getClassPool().get("java.lang.String"),
+					classPool.get("java.lang.String"),
 					CtClass.floatType,
 					CtClass.floatType,
 					CtClass.floatType,
-					HookManager.getInstance().getClassPool().get("java.lang.String"),
+					classPool.get("java.lang.String"),
 					CtClass.booleanType
 			});
 			
@@ -75,8 +77,8 @@ public class ServerPacksMod implements WurmMod, Initable {
 				}
 			});
 			
-			descriptor = Descriptor.ofMethod(HookManager.getInstance().getClassPool().get("com.wurmonline.client.resources.ResourceUrl"), new CtClass[] {
-					HookManager.getInstance().getClassPool().get("java.lang.String")
+			descriptor = Descriptor.ofMethod(classPool.get("com.wurmonline.client.resources.ResourceUrl"), new CtClass[] {
+					classPool.get("java.lang.String")
 			});
 			
 			
@@ -89,12 +91,46 @@ public class ServerPacksMod implements WurmMod, Initable {
 						@Override
 						public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 							synchronized (proxy) {
+								method.setAccessible(true);
 								return method.invoke(proxy, args);
 							}
 						}
 					};
 				}
 			});
+			
+			// com.wurmonline.client.console.WurmConsole.handleInput2(String, boolean)
+			descriptor = Descriptor.ofMethod(CtClass.voidType, new CtClass[] {
+					classPool.get("java.lang.String"),
+					classPool.get("boolean")
+			});
+			
+			
+			HookManager.getInstance().registerHook("com.wurmonline.client.console.WurmConsole", "handleInput2", descriptor, new InvocationHandlerFactory() {
+				
+				@Override
+				public InvocationHandler createInvocationHandler() {
+					return new InvocationHandler() {
+						
+						@Override
+						public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+							synchronized (proxy) {
+								String string = String.valueOf(args[0]);
+								if (string.startsWith("mod serverpacks installpack")) {
+									String[] s = string.split(" ", 4);
+									if (s.length == 4) {
+										installServerPack(s[3]);
+									}
+									return null;
+								}
+								
+								return method.invoke(proxy, args);
+							}
+						}
+					};
+				}
+			});
+			
 			
 		} catch (NotFoundException e) {
 			throw new HookException(e);
@@ -103,7 +139,6 @@ public class ServerPacksMod implements WurmMod, Initable {
 	
 
 	private void installServerPack(String packEntry) {
-		
 		String[] parts = packEntry.split(":", 2);
 		if (parts.length == 2) {
 			String packId = parts[0];
@@ -176,6 +211,7 @@ public class ServerPacksMod implements WurmMod, Initable {
 				synchronized (resources) {
 					packs.add(jarPack);
 					reloadPacks();
+					logger.log(Level.INFO, "Added server pack " + packId);
 				}
 				
 			} finally {
