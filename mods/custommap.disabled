@@ -1,0 +1,2 @@
+classname=org.gotti.wurmonline.clientmods.custommap.CustomMapMod
+classpath=custommap.jar
