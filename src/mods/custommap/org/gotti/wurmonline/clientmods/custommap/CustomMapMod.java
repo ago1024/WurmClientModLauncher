@@ -53,7 +53,7 @@ public class CustomMapMod implements WurmMod, Initable {
 								}
 							}
 							
-							Map map = new Map(mapName, textureName, false, 620, 620);
+							Map map = new Map(mapName, textureName, false, 920, 620);
 							maps.add(map);
 							
 							return result;
