@@ -6,6 +6,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -32,7 +33,7 @@ public abstract class PackDownloader implements Runnable {
 			Path packName = Paths.get("packs", packId + ".jar");
 
 			try (InputStream is = url.openStream()) {
-				Files.copy(is, tmpName);
+				Files.copy(is, tmpName, StandardCopyOption.REPLACE_EXISTING);
 			}
 			Files.move(tmpName, packName);
 
