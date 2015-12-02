@@ -1,0 +1,8 @@
+/bin/
+/bin.ant*/
+/dist/
+/lib/client.jar
+/lib/common.jar
+/mods/*/*.jar
+modlauncher.jar
+patcher.jar
