@@ -130,10 +130,6 @@ public class ModPacks {
 
 			addPack(jarPack, o);
 
-			if (!o.contains(Options.NORELOAD)) {
-				reloadPacks();
-			}
-
 			updateServerData(jarPack, o);
 
 			return true;
@@ -177,6 +173,10 @@ public class ModPacks {
 				packs.add(0, jarPack);
 			} else {
 				packs.add(jarPack);
+			}
+			
+			if (!options.contains(Options.NORELOAD)) {
+				reloadPacks();
 			}
 		}
 	}
