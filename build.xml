@@ -2,6 +2,7 @@
 <project default="jar" name="Wurm Unlimited Mod Launcher">
 	
 	<property name="mods" value="serverpacks,connectionfix,custommap"/>
+	<property file="build.properties"/>
 
 	<taskdef resource="net/sf/antcontrib/antcontrib.properties">
 		<classpath>
@@ -117,5 +118,17 @@
 		<delete file="mods/${modname}/${modname}.jar"/>
 		<delete dir="bin.ant.${modname}"/>
 		<delete file="dist/${modname}.zip"/>
+	</target>
+	
+	<target name="install" depends="zip">
+		<unzip dest="${wudir}" src="dist/modlauncher.zip"/>
+		<java fork="true" dir="${wudir}" classname="org.gotti.wurmunlimited.patcher.PatchClientJar">
+			<classpath>
+				<fileset dir="${wudir}">
+					<include name="patcher.jar"/>
+					<include name="javassist.jar"/>
+				</fileset>
+			</classpath>
+		</java>
 	</target>
 </project>
