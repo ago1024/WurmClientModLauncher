@@ -23,6 +23,7 @@ import org.gotti.wurmunlimited.modloader.interfaces.ModListener;
 import org.gotti.wurmunlimited.modloader.interfaces.PreInitable;
 import org.gotti.wurmunlimited.modloader.interfaces.WurmMod;
 import org.gotti.wurmunlimited.modsupport.ModClient;
+import org.gotti.wurmunlimited.modsupport.packs.ModArmor;
 import org.gotti.wurmunlimited.modsupport.packs.ModPacks;
 
 import javassist.Loader;
@@ -75,6 +76,7 @@ public class ModLoader {
 		mods.stream().filter(modEntry -> modEntry.mod instanceof PreInitable).forEach(modEntry -> ((PreInitable)modEntry.mod).preInit());
 		
 		ModClient.preInit();
+		ModPacks.preInit();
 
 		mods.stream().filter(modEntry -> modEntry.mod instanceof Initable).forEach(modEntry -> ((Initable)modEntry.mod).init());
 		

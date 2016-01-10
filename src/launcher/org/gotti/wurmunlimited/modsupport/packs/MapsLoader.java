@@ -11,7 +11,6 @@ import org.gotti.wurmunlimited.modloader.ReflectionUtil;
 import org.gotti.wurmunlimited.modloader.classhooks.HookException;
 import org.gotti.wurmunlimited.modsupport.ModClient;
 
-import com.sun.webkit.graphics.Ref;
 import com.wurmonline.client.game.World;
 import com.wurmonline.client.renderer.gui.WorldMap;
 import com.wurmonline.client.renderer.gui.maps.ClusterMap;

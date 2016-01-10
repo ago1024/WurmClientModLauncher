@@ -17,6 +17,7 @@ import java.util.logging.Logger;
 
 import org.gotti.wurmunlimited.modloader.ReflectionUtil;
 import org.gotti.wurmunlimited.modloader.classhooks.HookException;
+import org.gotti.wurmunlimited.modloader.classhooks.HookManager;
 
 import com.wurmonline.client.WurmClientBase;
 import com.wurmonline.client.resources.ResourceUrl;
@@ -24,6 +25,12 @@ import com.wurmonline.client.resources.Resources;
 import com.wurmonline.client.resources.textures.IconLoader;
 import com.wurmonline.client.resources.textures.ResourceTextureLoader;
 import com.wurmonline.shared.constants.IconConstants;
+
+import javassist.CannotCompileException;
+import javassist.ClassPool;
+import javassist.CtClass;
+import javassist.NotFoundException;
+import javassist.bytecode.Descriptor;
 
 /**
  * Helper for adding additional packs on demand.
@@ -68,6 +75,28 @@ public class ModPacks {
 	private static Field resourcesUnresolvedResources;
 
 	private static Field resourcesPacks;
+	
+	public static void preInit() {
+		try {
+			// com.wurmonline.client.resources.textures.PlayerTextureBuilder.loadImage(ResourceUrl, String)
+			
+			ClassPool classPool = HookManager.getInstance().getClassPool();
+			String descriptor = Descriptor.ofMethod(classPool.get("java.awt.image.BufferedImage"), new CtClass[] {
+					classPool.get("com.wurmonline.client.resources.ResourceUrl"),
+					classPool.get("java.lang.String")
+			});
+			
+			StringBuilder code = new StringBuilder();
+			code.append("{\n");
+			code.append("com.wurmonline.client.resources.ResourceUrl res = org.gotti.wurmunlimited.modsupport.packs.ModArmor.getArmorTexturePack($2);\n");
+			code.append("if (res != null) { $1 = res; }\n");
+			code.append("}\n");
+			classPool.get("com.wurmonline.client.resources.textures.PlayerTextureBuilder").getMethod("loadImage", descriptor).insertBefore(code.toString());
+			
+		} catch (NotFoundException | CannotCompileException e) {
+			throw new HookException(e);
+		}
+	}
 
 	public static void init() {
 		try {
@@ -214,8 +243,10 @@ public class ModPacks {
 	}
 
 	private static void updateArmor(Object jarPack) {
-		// TODO Auto-generated method stub
-
+		ResourceUrl armor = getResource(jarPack, "armor.xml");
+		if (armor != null) {
+			new ArmorLoader().load(armor);
+		}
 	}
 
 }
