@@ -12,6 +12,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -65,6 +66,7 @@ public class ModLoader {
 
 		try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(modDir, "*.properties")) {
 			for (Path modInfo : directoryStream) {
+				logger.log(Level.INFO, "Loading " + modInfo.toString());
 				Entry mod = loadModFromInfo(modInfo);
 				mods.add(mod);
 			}
