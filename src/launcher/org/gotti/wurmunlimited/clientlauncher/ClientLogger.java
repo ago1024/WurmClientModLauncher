@@ -13,6 +13,9 @@ import com.wurmonline.client.console.ConsoleListenerClass;
 public class ClientLogger {
 
 	private static final String CONSOLE_LOGGER = "com.wurmonline.console";
+	private static ThreadLocal<Boolean> inLogHandler = new ThreadLocal<>();
+	
+	
 	public static void initLogger() {
 		Formatter formatter = new OneLineLogMessageFormatter();
 		
@@ -20,8 +23,14 @@ public class ClientLogger {
 			@Override
 			public synchronized void publish(LogRecord record) {
 				
-				if (!CONSOLE_LOGGER.equals(record.getLoggerName()))
-					System.out.println(formatter.format(record));
+				if (!CONSOLE_LOGGER.equals(record.getLoggerName())) {
+					try {
+						inLogHandler.set(true);
+						System.out.println(formatter.format(record));
+					} finally {
+						inLogHandler.remove();
+					}
+				}
 			}
 		};
 		Logger.getLogger("").addHandler(handler);
@@ -32,7 +41,11 @@ public class ClientLogger {
 			
 			@Override
 			public void consoleOutput(String message) {
-				Logger.getLogger(CONSOLE_LOGGER).log(Level.INFO, message);
+				// Avoid logging log messages as console messages again
+				Boolean b = inLogHandler.get();
+				if (b == null || !b) {
+					Logger.getLogger(CONSOLE_LOGGER).log(Level.INFO, message);
+				}
 			}
 			@Override
 			public void consoleClosed() {
