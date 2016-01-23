@@ -10,6 +10,29 @@
 		</classpath>
 	</taskdef>
 	
+	<taskdef name="jgit-buildnumber" classname="ru.concerteza.util.buildnumber.JGitBuildNumberAntTask">
+		<classpath>
+			<pathelement location="lib/jgit-buildnumber-ant-task-1.2.10.jar" />
+			<pathelement location="lib/org.eclipse.jgit-2.0.0.jar" />
+		</classpath>
+	</taskdef>
+
+	<target name="git-revision">
+		<jgit-buildnumber />
+		<script language="javascript">
+		var tag = project.getProperty("git.tag")
+		var revision = project.getProperty("git.shortRevision")
+		var buildnumber;
+		if (tag) {
+			buildnumber = tag + "-" + revision
+		} else {
+			buildnumber = project.getProperty("git.branch") + "-" + revision
+		}
+		project.setProperty("git.buildnumber", buildnumber)
+		</script>
+		<echo message=" build ${git.buildnumber} ${git.tag} ${git.shortRevision}"/>
+	</target>
+	
 	<path id="client">
 		<fileset dir="lib">
 			<include name="client.jar"/>
@@ -22,7 +45,7 @@
 	</target>
 	
 	
-	<target name="compile-launcher">
+	<target name="compile-launcher" depends="git-revision">
 		<delete dir="bin.ant"/>
 		<mkdir dir="bin.ant"/>
 		<javac srcdir="src/launcher" destdir="bin.ant" debug="true" classpathref="client">
@@ -34,6 +57,7 @@
 			<manifest>
 				<attribute name="Main-Class" value="org.gotti.wurmunlimited.clientlauncher.ClientLauncher" />
 				<attribute name="Class-Path" value="javassist.jar client.jar common.jar lib/PNGDecoder-0.0.1.jar lib/SteamClientJni.jar lib/colladabind-1.0.0.jar lib/irclib-1.10.jar lib/jbullet-1.0.0.jar lib/joXSI-1.0.0.jar lib/jogg-0.0.7.jar lib/jorbis-0.0.15.jar lib/jzipupdate-0.9.1.jar lib/lwjgl-2.9.1.jar lib/lwjgl-natives-windows-2.9.1.jar lib/lwjgl_util-2.9.1.jar lib/slick-util-b208.jar lib/vecmath-1.5.2.jar" />
+				<attribute name="Implementation-Version" value="${git.buildnumber}"/>
 			</manifest>
 			<fileset dir="bin.ant">
 			</fileset>
@@ -73,6 +97,9 @@
 			</classpath>
 		</javac>
 		<jar destfile="mods/${modname}/${modname}.jar">
+			<manifest>
+				<attribute name="Implementation-Version" value="${git.buildnumber}"/>
+			</manifest>
 			<fileset dir="bin.ant.${modname}">
 			</fileset>
 		</jar>

@@ -7,13 +7,8 @@ import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.logging.FileHandler;
-import java.util.logging.Handler;
 import java.util.logging.Level;
-import java.util.logging.LogManager;
 import java.util.logging.Logger;
-
-import org.gotti.wurmunlimited.clientlauncher.OneLineLogMessageFormatter;
 
 public class WurmMain {
 
