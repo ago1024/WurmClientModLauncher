@@ -4,6 +4,9 @@ import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -14,6 +17,8 @@ import org.gotti.wurmunlimited.modsupport.ModClient;
 import com.wurmonline.client.game.World;
 import com.wurmonline.client.renderer.gui.WorldMap;
 import com.wurmonline.client.renderer.gui.maps.ClusterMap;
+import com.wurmonline.client.renderer.gui.maps.MapAnnotation;
+import com.wurmonline.client.renderer.gui.maps.MapAnnotationGroup;
 import com.wurmonline.client.renderer.gui.maps.MapXml;
 import com.wurmonline.client.resources.ResourceUrl;
 import com.wurmonline.shared.xml.XmlNode;
@@ -56,6 +61,11 @@ class MapsLoader {
 
 		if (rootNode != null) {
 			try {
+				ClusterMap currentCluster = ReflectionUtil.getPrivateField(worldMap, ReflectionUtil.getField(WorldMap.class, "currentCluster"));
+				final List<MapAnnotation> privateAnnotations = ReflectionUtil.getPrivateField(currentCluster.getCurrentMapsPrivateAnnotations(), ReflectionUtil.getField(MapAnnotationGroup.class, "annotationList"));
+				final List<MapAnnotation> villageAnnotations = ReflectionUtil.getPrivateField(currentCluster.getCurrentMapsVillageAnnotations(), ReflectionUtil.getField(MapAnnotationGroup.class, "annotationList"));
+				final List<MapAnnotation> allianceAnnotations = ReflectionUtil.getPrivateField(currentCluster.getCurrentMapsAllianceAnnotations(), ReflectionUtil.getField(MapAnnotationGroup.class, "annotationList"));
+
 				HashMap<Integer, ClusterMap> clusterMapList = ReflectionUtil.callPrivateMethod(MapXml.class, mapXmlLoadFromRootNode, rootNode, worldMap);
 
 				Runnable task = new Runnable() {
@@ -73,6 +83,18 @@ class MapsLoader {
 								String serverName = ReflectionUtil.getPrivateField(world, ReflectionUtil.getField(World.class, "serverName"));
 								
 								worldMap.setStartingArea(cluster, serverName);
+
+								ClusterMap currentCluster = ReflectionUtil.getPrivateField(worldMap, ReflectionUtil.getField(WorldMap.class, "currentCluster"));
+								Map<MapAnnotationGroup, List<MapAnnotation>> annotations = new HashMap<>();
+								annotations.put(currentCluster.getCurrentMapsPrivateAnnotations(), privateAnnotations);
+								annotations.put(currentCluster.getCurrentMapsVillageAnnotations(), villageAnnotations);
+								annotations.put(currentCluster.getCurrentMapsAllianceAnnotations(), allianceAnnotations);
+								
+								for (Entry<MapAnnotationGroup, List<MapAnnotation>> entry : annotations.entrySet()) {
+									for (MapAnnotation annotation : entry.getValue()) {
+										entry.getKey().addAnnotation(annotation);
+									}
+								}
 							}
 						}
 						catch (IllegalAccessException | IllegalArgumentException | ClassCastException | NoSuchFieldException e) {
@@ -83,7 +105,7 @@ class MapsLoader {
 				
 				ModClient.runTask(task);
 			}
-			catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | ClassCastException e) {
+			catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | ClassCastException | NoSuchFieldException e) {
 				logger.log(Level.SEVERE, e.getMessage(), e);
 			}
 		}
