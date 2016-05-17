@@ -1,8 +1,10 @@
 package org.gotti.wurmonline.clientmods.serverpacks;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -15,6 +17,9 @@ import org.gotti.wurmunlimited.modloader.classhooks.InvocationHandlerFactory;
 import org.gotti.wurmunlimited.modloader.interfaces.Initable;
 import org.gotti.wurmunlimited.modloader.interfaces.WurmMod;
 import org.gotti.wurmunlimited.modsupport.packs.ModPacks;
+import org.gotti.wurmunlimited.modcomm.IChannelListener;
+import org.gotti.wurmunlimited.modcomm.ModComm;
+import org.gotti.wurmunlimited.modcomm.PacketReader;
 
 import javassist.ClassPool;
 import javassist.CtClass;
@@ -30,41 +35,26 @@ public class ServerPacksMod implements WurmMod, Initable {
 	public void init() {
 	
 		try {
-			//com.wurmonline.client.renderer.gui.ChatManagerManager.textMessage(String, float, float, float, String, boolean)
-			
-			ClassPool classPool = HookManager.getInstance().getClassPool();
-			String descriptor = Descriptor.ofMethod(CtClass.voidType, new CtClass[] {
-					classPool.get("java.lang.String"),
-					CtClass.floatType,
-					CtClass.floatType,
-					CtClass.floatType,
-					classPool.get("java.lang.String"),
-					CtClass.booleanType
-			});
-			
-			HookManager.getInstance().registerHook("com.wurmonline.client.renderer.gui.ChatManagerManager", "textMessage", descriptor, new InvocationHandlerFactory() {
-				
+			ModComm.registerChannel("ago.serverpacks", new IChannelListener() {
 				@Override
-				public InvocationHandler createInvocationHandler() {
-					return new InvocationHandler() {
-						
-						@Override
-						public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-							if (":mod:serverpacks".equals(args[0])) {
-								logger.log(Level.INFO, "Got server pack " + args[4]);
-								
-								installServerPack(String.valueOf(args[4]));
-								
-								return null;
-							} else {
-								return method.invoke(proxy, args);
-							}
+				public void handleMessage(ByteBuffer message) {
+					try (PacketReader reader = new PacketReader(message)) {
+						int n = reader.readInt();
+						while (n-- > 0) {
+							String packId = reader.readUTF();
+							String uri = reader.readUTF();
+							logger.log(Level.INFO, String.format("Got server pack %s (%s)", packId, uri));
+							installServerPack(packId, uri);
 						}
-					};
+					} catch (IOException e) {
+						throw new RuntimeException(e);
+					}
 				}
 			});
 			
-			descriptor = Descriptor.ofMethod(classPool.get("com.wurmonline.client.resources.ResourceUrl"), new CtClass[] {
+			ClassPool classPool = HookManager.getInstance().getClassPool();
+			
+			String descriptor = Descriptor.ofMethod(classPool.get("com.wurmonline.client.resources.ResourceUrl"), new CtClass[] {
 					classPool.get("java.lang.String")
 			});
 			
@@ -104,9 +94,9 @@ public class ServerPacksMod implements WurmMod, Initable {
 							synchronized (proxy) {
 								String string = String.valueOf(args[0]);
 								if (string.startsWith("mod serverpacks installpack")) {
-									String[] s = string.split(" ", 4);
-									if (s.length == 4) {
-										installServerPack(s[3]);
+									String[] s = string.split(" ", 5);
+									if (s.length == 5) {
+										installServerPack(s[3], s[4]);
 									}
 									return null;
 								}
@@ -125,18 +115,11 @@ public class ServerPacksMod implements WurmMod, Initable {
 	}
 	
 
-	private void installServerPack(String packEntry) {
-		String[] parts = packEntry.split(":", 2);
-		if (parts.length == 2) {
-			String packId = parts[0];
-			String packUrl = parts[1];
-			if (!checkForExistingPack(packId)) {
-				downloadPack(packUrl, packId);
-			} else {
-				enableDownloadedPack(packId);
-			}
+	private void installServerPack(String packId, String packUrl) {
+		if (!checkForExistingPack(packId)) {
+			downloadPack(packUrl, packId);
 		} else {
-			logger.log(Level.WARNING, "Failed to extract pack id from " + packEntry);
+			enableDownloadedPack(packId);
 		}
 	}
 
