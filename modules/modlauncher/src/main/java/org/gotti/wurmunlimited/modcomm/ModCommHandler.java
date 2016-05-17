@@ -47,31 +47,32 @@ public class ModCommHandler {
     }
 
     private static void handlePacketChannels(ByteBuffer msg) throws IOException {
-        PacketReader reader = new PacketReader(msg);
-        HashSet<Channel> toActivate = new HashSet<>();
+        try (PacketReader reader = new PacketReader(msg)) {
+            HashSet<Channel> toActivate = new HashSet<>();
 
-        ModComm.serverVersion = reader.readByte();
+            ModComm.serverVersion = reader.readByte();
 
-        int n = reader.readInt();
+            int n = reader.readInt();
 
-        while (n-- > 0) {
-            int id = reader.readInt();
-            String name = reader.readUTF();
-            if (ModComm.channels.containsKey(name)) {
-                Channel channel = ModComm.channels.get(name);
-                channel.id = id;
-                ModComm.idMap.put(id, channel);
-                toActivate.add(channel);
+            while (n-- > 0) {
+                int id = reader.readInt();
+                String name = reader.readUTF();
+                if (ModComm.channels.containsKey(name)) {
+                    Channel channel = ModComm.channels.get(name);
+                    channel.id = id;
+                    ModComm.idMap.put(id, channel);
+                    toActivate.add(channel);
+                }
             }
-        }
 
-        ModComm.logInfo(String.format("Handshake response received, server protocol version is %d, %d channels activated", ModComm.serverVersion, toActivate.size()));
+            ModComm.logInfo(String.format("Handshake response received, server protocol version is %d, %d channels activated", ModComm.serverVersion, toActivate.size()));
 
-        for (Channel channel : toActivate) {
-            try {
-                channel.listener.onServerConnected();
-            } catch (Exception e) {
-                ModComm.logException(String.format("Error in channel %s onServerConnected", channel.name), e);
+            for (Channel channel : toActivate) {
+                try {
+                    channel.listener.onServerConnected();
+                } catch (Exception e) {
+                    ModComm.logException(String.format("Error in channel %s onServerConnected", channel.name), e);
+                }
             }
         }
     }
