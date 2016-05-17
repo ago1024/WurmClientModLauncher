@@ -20,7 +20,7 @@ import org.gotti.wurmunlimited.modloader.classhooks.HookException;
 import org.gotti.wurmunlimited.modloader.classhooks.HookManager;
 import org.gotti.wurmunlimited.modloader.classhooks.InvocationHandlerFactory;
 import org.gotti.wurmunlimited.modloader.interfaces.Initable;
-import org.gotti.wurmunlimited.modloader.interfaces.WurmMod;
+import org.gotti.wurmunlimited.modloader.interfaces.WurmClientMod;
 import org.gotti.wurmunlimited.modsupport.packs.ModPacks;
 
 import javassist.ClassPool;
@@ -29,7 +29,7 @@ import javassist.NotFoundException;
 import javassist.bytecode.Descriptor;
 
 
-public class ServerPacksMod implements WurmMod, Initable {
+public class ServerPacksMod implements WurmClientMod, Initable {
 	
 	private static final byte CMD_REFRESH = 0x01;
 

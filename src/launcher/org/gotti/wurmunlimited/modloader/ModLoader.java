@@ -25,7 +25,7 @@ import org.gotti.wurmunlimited.modloader.interfaces.Initable;
 import org.gotti.wurmunlimited.modloader.interfaces.ModEntry;
 import org.gotti.wurmunlimited.modloader.interfaces.ModListener;
 import org.gotti.wurmunlimited.modloader.interfaces.PreInitable;
-import org.gotti.wurmunlimited.modloader.interfaces.WurmMod;
+import org.gotti.wurmunlimited.modloader.interfaces.WurmClientMod;
 import org.gotti.wurmunlimited.modsupport.ModClient;
 import org.gotti.wurmunlimited.modsupport.packs.ModPacks;
 
@@ -40,10 +40,10 @@ public class ModLoader {
 	private static Logger logger = Logger.getLogger(ModLoader.class.getName());
 	
 	private class Entry implements ModEntry {
-		private WurmMod mod;
+		private WurmClientMod mod;
 		private Properties properties;
 		private String name;
-		public Entry(WurmMod mod, Properties properties, String name) {
+		public Entry(WurmClientMod mod, Properties properties, String name) {
 			this.mod = mod;
 			this.properties = properties;
 			this.name = name;
@@ -57,7 +57,7 @@ public class ModLoader {
 			return properties;
 		}
 		@Override
-		public WurmMod getWurmMod() {
+		public WurmClientMod getWurmMod() {
 			return mod;
 		}
 	}
@@ -66,7 +66,7 @@ public class ModLoader {
 
 	}
 
-	public List<WurmMod> loadModsFromModDir(Path modDir) throws IOException {
+	public List<WurmClientMod> loadModsFromModDir(Path modDir) throws IOException {
 		List<Entry> mods = new ArrayList<Entry>();
 		
 		logger.info(String.format("ModLoader version %1$s", this.getClass().getPackage().getImplementationVersion()));
@@ -160,7 +160,7 @@ public class ModLoader {
 				classloader = loader;
 			}
 
-			WurmMod mod = classloader.loadClass(className).asSubclass(WurmMod.class).newInstance();
+			WurmClientMod mod = classloader.loadClass(className).asSubclass(WurmClientMod.class).newInstance();
 			return new Entry(mod, properties, modname);
 		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException | NotFoundException e) {
 			throw new IOException(e);

@@ -8,6 +8,6 @@ public interface ModEntry {
 	
 	Properties getProperties();
 	
-	WurmMod getWurmMod();
+	WurmClientMod getWurmMod();
 
 }

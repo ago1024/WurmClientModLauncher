@@ -11,14 +11,14 @@ import org.gotti.wurmunlimited.modloader.ReflectionUtil;
 import org.gotti.wurmunlimited.modloader.classhooks.HookManager;
 import org.gotti.wurmunlimited.modloader.classhooks.InvocationHandlerFactory;
 import org.gotti.wurmunlimited.modloader.interfaces.Initable;
-import org.gotti.wurmunlimited.modloader.interfaces.WurmMod;
+import org.gotti.wurmunlimited.modloader.interfaces.WurmClientMod;
 
 import com.wurmonline.client.game.World;
 import com.wurmonline.client.renderer.gui.WorldMap;
 import com.wurmonline.client.renderer.gui.maps.ClusterMap;
 import com.wurmonline.client.renderer.gui.maps.Map;
 
-public class CustomMapMod implements WurmMod, Initable {
+public class CustomMapMod implements WurmClientMod, Initable {
 
 	private static Logger logger = Logger.getLogger(CustomMapMod.class.getName());
 
