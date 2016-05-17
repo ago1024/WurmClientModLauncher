@@ -11,15 +11,17 @@ import java.nio.file.Paths;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.gotti.wurmunlimited.modcomm.Channel;
+import org.gotti.wurmunlimited.modcomm.IChannelListener;
+import org.gotti.wurmunlimited.modcomm.ModComm;
+import org.gotti.wurmunlimited.modcomm.PacketReader;
+import org.gotti.wurmunlimited.modcomm.PacketWriter;
 import org.gotti.wurmunlimited.modloader.classhooks.HookException;
 import org.gotti.wurmunlimited.modloader.classhooks.HookManager;
 import org.gotti.wurmunlimited.modloader.classhooks.InvocationHandlerFactory;
 import org.gotti.wurmunlimited.modloader.interfaces.Initable;
 import org.gotti.wurmunlimited.modloader.interfaces.WurmMod;
 import org.gotti.wurmunlimited.modsupport.packs.ModPacks;
-import org.gotti.wurmunlimited.modcomm.IChannelListener;
-import org.gotti.wurmunlimited.modcomm.ModComm;
-import org.gotti.wurmunlimited.modcomm.PacketReader;
 
 import javassist.ClassPool;
 import javassist.CtClass;
@@ -29,13 +31,16 @@ import javassist.bytecode.Descriptor;
 
 public class ServerPacksMod implements WurmMod, Initable {
 	
+	private static final byte CMD_REFRESH = 0x01;
+
 	private Logger logger = Logger.getLogger(ServerPacksMod.class.getName());
+	private Channel channel = null;
 
 	@Override
 	public void init() {
 	
 		try {
-			ModComm.registerChannel("ago.serverpacks", new IChannelListener() {
+			channel = ModComm.registerChannel("ago.serverpacks", new IChannelListener() {
 				@Override
 				public void handleMessage(ByteBuffer message) {
 					try (PacketReader reader = new PacketReader(message)) {
@@ -46,6 +51,7 @@ public class ServerPacksMod implements WurmMod, Initable {
 							logger.log(Level.INFO, String.format("Got server pack %s (%s)", packId, uri));
 							installServerPack(packId, uri);
 						}
+						refreshModels();
 					} catch (IOException e) {
 						throw new RuntimeException(e);
 					}
@@ -97,6 +103,7 @@ public class ServerPacksMod implements WurmMod, Initable {
 									String[] s = string.split(" ", 5);
 									if (s.length == 5) {
 										installServerPack(s[3], s[4]);
+										refreshModels();
 									}
 									return null;
 								}
@@ -136,8 +143,10 @@ public class ServerPacksMod implements WurmMod, Initable {
 			@Override
 			protected void done(String packId) {
 				enableDownloadedPack(packId);
+				refreshModels();
 			}
 		};
+
 		new Thread(downloader).start();
 	}
 
@@ -151,5 +160,19 @@ public class ServerPacksMod implements WurmMod, Initable {
 
 	private String getPackName(String packId) {
 		return packId + ".jar";
+	}
+
+	/**
+	 * Send CMD_REFRESH to the server for a complete refresh of all creatures and models
+	 */
+	private void refreshModels() {
+		if (channel != null) {
+			try (PacketWriter writer = new PacketWriter()) {
+				writer.writeByte(CMD_REFRESH);
+				channel.sendMessage(writer.getBytes());
+			} catch (IOException e) {
+				logger.log(Level.WARNING, e.getMessage(), e);
+			}
+		}
 	}
 }
