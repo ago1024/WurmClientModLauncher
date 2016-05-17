@@ -1,0 +1,84 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<artifactId>client-modlauncher</artifactId>
+	<packaging>jar</packaging>
+
+	<name>client modlauncher</name>
+
+	<parent>
+		<groupId>org.gotti.wurmunlimited</groupId>
+		<artifactId>client-modlauncher-parent</artifactId>
+		<version>0.4-SNAPSHOT</version>
+		<relativePath>../..</relativePath>
+	</parent>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.gotti.wurmunlimited</groupId>
+			<artifactId>common-client</artifactId>
+			<version>LATEST</version>
+		</dependency>
+		<dependency>
+			<groupId>org.gotti.wurmunlimited</groupId>
+			<artifactId>client</artifactId>
+			<version>LATEST</version>
+		</dependency>
+		<dependency>
+			<groupId>org.javassist</groupId>
+			<artifactId>javassist</artifactId>
+			<version>3.20.0-GA</version>
+		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.12</version>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<version>2.4</version>
+				<configuration>
+					<archive>
+						<manifestEntries>
+							<Class-Path>javassist.jar client.jar common.jar lib/PNGDecoder-0.0.1.jar lib/SteamClientJni.jar lib/colladabind-1.0.0.jar lib/irclib-1.10.jar lib/jbullet-1.0.0.jar lib/joXSI-1.0.0.jar lib/jogg-0.0.7.jar lib/jorbis-0.0.15.jar lib/jzipupdate-0.9.1.jar lib/lwjgl-2.9.1.jar lib/lwjgl-natives-windows-2.9.1.jar lib/lwjgl_util-2.9.1.jar lib/slick-util-b208.jar lib/vecmath-1.5.2.jar</Class-Path>
+							<Implementation-Version>${git.buildnumber}</Implementation-Version>
+						</manifestEntries>
+						<manifest>
+							<mainClass>org.gotti.wurmunlimited.clientlauncher.ClientLauncher</mainClass>
+						</manifest>
+					</archive>
+				</configuration>
+			</plugin>
+			<plugin>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<version>2.6</version>
+				<configuration>
+					<descriptors>
+						<descriptor>src/assembly/modloader.xml</descriptor>
+					</descriptors>
+					<appendAssemblyId>false</appendAssemblyId>
+				</configuration>
+				<executions>
+					<execution>
+						<id>make-assembly</id>
+						<phase>package</phase>
+						<goals>
+							<goal>single</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+</project>

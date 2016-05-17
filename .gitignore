@@ -6,3 +6,11 @@
 /mods/*/*.jar
 modlauncher.jar
 patcher.jar
+target
+.project
+.classpath
+.checkstyle
+.settings
+beta
+*~
+.*.swp

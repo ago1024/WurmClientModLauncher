@@ -1,0 +1,27 @@
+<assembly xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.3" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.3 http://maven.apache.org/xsd/assembly-1.1.3.xsd">
+  <id>dist</id>
+  <includeBaseDirectory>false</includeBaseDirectory>
+  <formats>
+    <format>dir</format>
+  </formats>
+  <files>
+    <file>
+      <source>${project.build.directory}/client-modlauncher-${project.version}.zip</source>
+    </file>
+  </files>
+ <dependencySets>
+    <dependencySet>
+      <includes>
+        <include>${project.groupId}:*:zip</include>
+      </includes>
+      <excludes>
+        <exclude>${project.groupId}:client-modlauncher</exclude>
+        <exclude>${project.groupId}:client-patcher</exclude>
+      </excludes>
+      <useProjectArtifact>false</useProjectArtifact>    
+      <useTransitiveDependencies>false</useTransitiveDependencies>
+    </dependencySet>
+  </dependencySets>
+</assembly>
