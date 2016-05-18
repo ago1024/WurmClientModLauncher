@@ -26,8 +26,8 @@ public class ModLoader extends ModLoaderShared<WurmClientMod> {
 	
 	@Override
 	protected void init() {
-		ModConsole.preInit();
-		ModClient.preInit();
-		ModPacks.preInit();
+		ModConsole.init();
+		ModClient.init();
+		ModPacks.init();
 	}
 }
