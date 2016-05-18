@@ -4,7 +4,7 @@
 
 	<groupId>org.gotti.wurmunlimited</groupId>
 	<artifactId>client-modlauncher-parent</artifactId>
-	<version>0.4</version>
+	<version>0.5-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
 	<name>client modlauncher parent</name>
@@ -17,6 +17,13 @@
 		<module>modules/mods/serverpacks</module>
 		<module>modules/dist</module>
 	</modules>
+
+	<repositories>
+		<repository>
+			<id>gotti-no-ip-org-ssh-repository</id>
+			<url>http://gotti.no-ip.org/maven/repository</url>
+		</repository>
+	</repositories>
 
 	<distributionManagement>
 		<snapshotRepository>

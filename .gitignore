@@ -12,5 +12,6 @@ target
 .checkstyle
 .settings
 beta
+pom.xml.versionsBackup
 *~
 .*.swp
