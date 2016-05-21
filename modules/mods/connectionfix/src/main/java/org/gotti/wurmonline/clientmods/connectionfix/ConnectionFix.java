@@ -19,17 +19,17 @@ public class ConnectionFix implements WurmClientMod, PreInitable {
 			
 			ClassPool classpool = HookManager.getInstance().getClassPool();
 			
-			classpool.get("com.wurmonline.client.WurmClientBase").getMethod("performConnection", "()V").instrument(new ExprEditor() {
+			classpool.get("com.wurmonline.communication.SocketConnection").getMethod("tick", "()V").instrument(new ExprEditor() {
 				
 				@Override
 				public void edit(MethodCall m) throws CannotCompileException {
-					if (m.getClassName().equals("com.wurmonline.client.comm.SimpleServerConnectionClass") && m.getMethodName().equals("isConnecting")) {
-						if (m.getLineNumber() == 737) {
-							m.replace("$_ = $proceed($$) && !serverConnection.GetSteamAuthenticateSucces();"); 
-						}
-					} 
+					if (m.getClassName().equals("java.nio.channels.SocketChannel") && m.getMethodName().equals("read")) {
+						m.replace("{ int r = $proceed($$); if (r < 0) throw new java.io.IOException(\"Disconnected.\"); $_ = r; }");
+					}
 				}
+				
 			});
+			
 		} catch (NotFoundException | CannotCompileException e) {
 			throw new HookException(e);
 		}
