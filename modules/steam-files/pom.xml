@@ -4,13 +4,13 @@
 
 	<groupId>org.gotti.wurmunlimited</groupId>
 	<artifactId>steam-client-files</artifactId>
-	<version>0.18-SNAPSHOT</version>
+	<version>0.5-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	
 	<parent>
 		<groupId>org.gotti.wurmunlimited</groupId>
 		<artifactId>client-modlauncher-parent</artifactId>
-		<version>0.18-SNAPSHOT</version>
+		<version>0.5-SNAPSHOT</version>
 		<relativePath>../..</relativePath>
 	</parent>
 
