@@ -1,6 +1,6 @@
 package org.gotti.wurmunlimited.modloader.interfaces;
 
-public interface WurmClientMod {
+public interface WurmClientMod extends Versioned {
 	
 	public default void init() {
 	}
