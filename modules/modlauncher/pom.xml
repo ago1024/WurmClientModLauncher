@@ -18,17 +18,17 @@
 		<dependency>
 			<groupId>org.gotti.wurmunlimited</groupId>
 			<artifactId>modloader-shared</artifactId>
-			<version>0.2</version>
+			<version>0.10</version>
 		</dependency>
 		<dependency>
 			<groupId>org.gotti.wurmunlimited</groupId>
 			<artifactId>common-client</artifactId>
-			<version>LATEST</version>
+			<version>2170075</version>
 		</dependency>
 		<dependency>
 			<groupId>org.gotti.wurmunlimited</groupId>
 			<artifactId>client</artifactId>
-			<version>LATEST</version>
+			<version>2170075</version>
 		</dependency>
 		<dependency>
 			<groupId>org.javassist</groupId>
