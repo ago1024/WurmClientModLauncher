@@ -14,11 +14,11 @@ public abstract class PackDownloader implements Runnable {
 
 	private Logger logger = Logger.getLogger(ServerPacksMod.class.getName());
 
-	private String packUrl;
+	private URL packUrl;
 
 	private String packId;
 
-	public PackDownloader(String packUrl, String packId) {
+	public PackDownloader(URL packUrl, String packId) {
 		this.packUrl = packUrl;
 		this.packId = packId;
 	}
@@ -28,11 +28,10 @@ public abstract class PackDownloader implements Runnable {
 	@Override
 	public void run() {
 		try {
-			URL url = new URL(packUrl);
 			Path tmpName = Paths.get("packs", packId);
 			Path packName = Paths.get("packs", packId + ".jar");
 
-			try (InputStream is = url.openStream()) {
+			try (InputStream is = packUrl.openStream()) {
 				Files.copy(is, tmpName, StandardCopyOption.REPLACE_EXISTING);
 			}
 			Files.move(tmpName, packName);

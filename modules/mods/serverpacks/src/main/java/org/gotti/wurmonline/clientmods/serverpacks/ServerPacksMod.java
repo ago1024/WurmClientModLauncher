@@ -1,16 +1,31 @@
 package org.gotti.wurmonline.clientmods.serverpacks;
 
+import static java.util.Collections.emptyList;
+import static java.util.stream.Collectors.mapping;
+import static java.util.stream.Collectors.toList;
+
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLDecoder;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.AbstractMap.SimpleImmutableEntry;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import org.gotti.wurmunlimited.modcomm.Channel;
 import org.gotti.wurmunlimited.modcomm.IChannelListener;
@@ -25,6 +40,7 @@ import org.gotti.wurmunlimited.modloader.interfaces.WurmClientMod;
 import org.gotti.wurmunlimited.modsupport.console.ConsoleListener;
 import org.gotti.wurmunlimited.modsupport.console.ModConsole;
 import org.gotti.wurmunlimited.modsupport.packs.ModPacks;
+import org.gotti.wurmunlimited.modsupport.packs.ModPacks.Options;
 
 import javassist.ClassPool;
 import javassist.CtClass;
@@ -34,6 +50,10 @@ import javassist.bytecode.Descriptor;
 
 public class ServerPacksMod implements WurmClientMod, Initable, ConsoleListener {
 	
+	private static final Options[] OPTIONS_DEFAULT = new Options[] {};
+
+	private static final Options[] OPTIONS_PREPEND = new Options[] { Options.PREPEND };
+
 	private static final String CONSOLE_PREFIX = "mod serverpacks";
 
 	private static final byte CMD_REFRESH = 0x01;
@@ -95,28 +115,53 @@ public class ServerPacksMod implements WurmClientMod, Initable, ConsoleListener 
 		}
 	}
 	
+	private void installServerPack(String packId, String packUri) {
+		try {
+			URL packUrl = new URL(packUri);
+			if (!checkForExistingPack(packId)) {
+				downloadPack(packUrl, packId);
+			} else {
+				enableDownloadedPack(packId, packUrl);
+			}
+		} catch (MalformedURLException e) {
+			logger.log(Level.SEVERE, e.getMessage(), e);
+		}
+	}
+	
+	private Map<String, List<String>> splitQuery(URL url) {
+		if (url == null || url.getQuery() == null || url.getQuery().isEmpty()) {
+			return Collections.emptyMap();
+		}
+		return Arrays.stream(url.getQuery().split("&"))
+				.map(this::splitQueryParameter)
+				.collect(Collectors.groupingBy(SimpleImmutableEntry::getKey, LinkedHashMap::new, mapping(Map.Entry::getValue, toList())));
+	}
 
-	private void installServerPack(String packId, String packUrl) {
-		if (!checkForExistingPack(packId)) {
-			downloadPack(packUrl, packId);
-		} else {
-			enableDownloadedPack(packId);
+	private SimpleImmutableEntry<String, String> splitQueryParameter(String it) {
+		try {
+			final int idx = it.indexOf("=");
+			final String key = idx > 0 ? it.substring(0, idx) : it;
+			final String value = idx > 0 && it.length() > idx + 1 ? URLDecoder.decode(it.substring(idx + 1), "UTF-8") : null;
+			return new SimpleImmutableEntry<>(key, value);
+		} catch (UnsupportedEncodingException e) {
+			throw new RuntimeException(e);
 		}
 	}
 
-	private void enableDownloadedPack(String packId) {
+	private void enableDownloadedPack(String packId, URL packUrl) {
 		File file = Paths.get("packs", getPackName(packId)).toFile();
 		
-		if (ModPacks.addPack(file)) {
+		boolean prepend = Boolean.parseBoolean(splitQuery(packUrl).getOrDefault("prepend", emptyList()).stream().map(v -> v == null ? "true" : v).reduce((a, b) -> b).orElse("false"));
+		if (ModPacks.addPack(file, prepend ? OPTIONS_PREPEND : OPTIONS_DEFAULT)) {
 			logger.log(Level.INFO, "Added server pack " + packId);
 		}
 	}
 
-	private void downloadPack(String packUrl, String packId) {
+	private void downloadPack(URL packUrl, String packId) {
 		PackDownloader downloader = new PackDownloader(packUrl, packId) {
 			@Override
 			protected void done(String packId) {
-				enableDownloadedPack(packId);
+				enableDownloadedPack(packId, packUrl);
 				refreshModels();
 			}
 		};
