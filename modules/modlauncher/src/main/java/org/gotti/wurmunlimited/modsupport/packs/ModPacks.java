@@ -18,8 +18,13 @@ import java.util.logging.Logger;
 import org.gotti.wurmunlimited.modloader.ReflectionUtil;
 import org.gotti.wurmunlimited.modloader.classhooks.HookException;
 import org.gotti.wurmunlimited.modloader.classhooks.HookManager;
+import org.gotti.wurmunlimited.modsupport.ModClient;
 
 import com.wurmonline.client.WurmClientBase;
+import com.wurmonline.client.renderer.PlayerBodyRenderable;
+import com.wurmonline.client.renderer.cell.CellRenderable;
+import com.wurmonline.client.renderer.cell.CellRenderer;
+import com.wurmonline.client.renderer.cell.PlayerCellRenderable;
 import com.wurmonline.client.resources.ResourceUrl;
 import com.wurmonline.client.resources.Resources;
 import com.wurmonline.client.resources.textures.IconLoader;
@@ -29,8 +34,11 @@ import com.wurmonline.shared.constants.IconConstants;
 import javassist.CannotCompileException;
 import javassist.ClassPool;
 import javassist.CtClass;
+import javassist.CtPrimitiveType;
 import javassist.NotFoundException;
 import javassist.bytecode.Descriptor;
+import javassist.expr.ExprEditor;
+import javassist.expr.MethodCall;
 
 /**
  * Helper for adding additional packs on demand.
@@ -75,23 +83,36 @@ public class ModPacks {
 	private static Field resourcesUnresolvedResources;
 
 	private static Field resourcesPacks;
+
+	private static Field cellRendererTickRenderables;
+
+	private static Field playerCellRenderableTextureDirty;
+
+	private static Field playerBodyRenderableTextureDirty;
+	
 	
 	public static void preInit() {
 		try {
 			// com.wurmonline.client.resources.textures.PlayerTextureBuilder.loadImage(ResourceUrl, String)
 			
 			ClassPool classPool = HookManager.getInstance().getClassPool();
-			String descriptor = Descriptor.ofMethod(classPool.get("java.awt.image.BufferedImage"), new CtClass[] {
-					classPool.get("com.wurmonline.client.resources.ResourceUrl"),
-					classPool.get("java.lang.String")
-			});
 			
-			StringBuilder code = new StringBuilder();
-			code.append("{\n");
-			code.append("com.wurmonline.client.resources.ResourceUrl res = org.gotti.wurmunlimited.modsupport.packs.ModArmor.getArmorTexturePack($2);\n");
-			code.append("if (res != null) { $1 = res; }\n");
-			code.append("}\n");
-			classPool.get("com.wurmonline.client.resources.textures.PlayerTextureBuilder").getMethod("loadImage", descriptor).insertBefore(code.toString());
+			ExprEditor modArmorDeriveEditor = new ExprEditor() {
+				@Override
+				public void edit(MethodCall m) throws CannotCompileException {
+					if ("com.wurmonline.client.resources.ResourceUrl".equals(m.getClassName()) && "derive".equals(m.getMethodName())) {
+						StringBuilder code = new StringBuilder();
+						code.append("{\n");
+						code.append("	com.wurmonline.client.resources.ResourceUrl res = org.gotti.wurmunlimited.modsupport.packs.ModArmor.getArmorTexture($$);\n");
+						code.append("	$_ = res != null ? res : $proceed($$);\n");
+						code.append("}\n");
+						m.replace(code.toString());
+					}
+				}
+			};
+			
+			classPool.get("com.wurmonline.client.resources.textures.PlayerTextureBuilderGL").getMethod("generateTexture", Descriptor.ofMethod(CtPrimitiveType.voidType, new CtClass[0])).instrument(modArmorDeriveEditor);
+			classPool.get("com.wurmonline.client.renderer.cell.PlayerTexture$PlayerTextureLoader").getMethod("run", Descriptor.ofMethod(CtPrimitiveType.voidType, new CtClass[0])).instrument(modArmorDeriveEditor);
 			
 		} catch (NotFoundException | CannotCompileException e) {
 			throw new HookException(e);
@@ -107,6 +128,9 @@ public class ModPacks {
 			resourceResolvedResources = ReflectionUtil.getField(Resources.class, "resolvedResources");
 			resourcesUnresolvedResources = ReflectionUtil.getField(Resources.class, "unresolvedResources");
 			resourcesPacks = ReflectionUtil.getField(Resources.class, "packs");
+			cellRendererTickRenderables = ReflectionUtil.getField(CellRenderer.class, "tickRenderables");
+			playerBodyRenderableTextureDirty = ReflectionUtil.getField(PlayerBodyRenderable.class, "textureDirty");
+			playerCellRenderableTextureDirty = ReflectionUtil.getField(PlayerCellRenderable.class, "textureDirty");
 		} catch (ClassNotFoundException | NoSuchMethodException | SecurityException | NoSuchFieldException e) {
 			logger.log(Level.SEVERE, e.getMessage(), e);
 			throw new HookException(e);
@@ -246,6 +270,27 @@ public class ModPacks {
 		ResourceUrl armor = getResource(jarPack, "armor.xml");
 		if (armor != null) {
 			new ArmorLoader().load(armor);
+			refreshPlayerModels();
+		}
+	}
+
+	public static void refreshPlayerModels() {
+		try {
+			CellRenderer cellRenderer = ModClient.getWorld().getCellRenderer();
+			List<CellRenderable> renderables = ReflectionUtil.getPrivateField(cellRenderer, cellRendererTickRenderables);
+			if (renderables != null) {
+				for (CellRenderable renderable : renderables) {
+					if (renderable instanceof PlayerCellRenderable) {
+						ReflectionUtil.setPrivateField(renderable, playerCellRenderableTextureDirty, true);
+					}
+					if (renderable instanceof PlayerBodyRenderable) {
+						ReflectionUtil.setPrivateField(renderable, playerBodyRenderableTextureDirty, true);
+					}
+				}
+			}
+		} catch (IllegalArgumentException | IllegalAccessException | ClassCastException e) {
+			logger.log(Level.SEVERE, e.getMessage(), e);
+			throw new HookException(e);
 		}
 	}
 
