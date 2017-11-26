@@ -118,7 +118,8 @@ public class ServerPacksMod implements WurmClientMod, Initable, ConsoleListener 
 	private void installServerPack(String packId, String packUri) {
 		try {
 			URL packUrl = new URL(packUri);
-			if (!checkForExistingPack(packId)) {
+			boolean force = Boolean.parseBoolean(splitQuery(packUrl).getOrDefault("force", emptyList()).stream().map(v -> v == null ? "true" : v).reduce((a, b) -> b).orElse("false"));
+			if (force || !checkForExistingPack(packId)) {
 				downloadPack(packUrl, packId);
 			} else {
 				enableDownloadedPack(packId, packUrl);
