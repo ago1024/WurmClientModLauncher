@@ -115,7 +115,6 @@
 						<configuration>
 							<outputDirectory>${project.build.outputDirectory}</outputDirectory>
 							<overwrite>true</overwrite>
-							<useBuildFilters>false</useBuildFilters>
 							<resources>
 								<resource>
 									<directory>${project.basedir}/src/dist</directory>
