@@ -34,7 +34,7 @@ public abstract class PackDownloader implements Runnable {
 			try (InputStream is = packUrl.openStream()) {
 				Files.copy(is, tmpName, StandardCopyOption.REPLACE_EXISTING);
 			}
-			Files.move(tmpName, packName);
+			Files.move(tmpName, packName, StandardCopyOption.REPLACE_EXISTING);
 
 			done(packId);
 
