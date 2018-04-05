@@ -112,7 +112,7 @@ public class ModPacks {
 			};
 			
 			classPool.get("com.wurmonline.client.resources.textures.PlayerTextureBuilderGL").getMethod("generateTexture", Descriptor.ofMethod(CtPrimitiveType.voidType, new CtClass[0])).instrument(modArmorDeriveEditor);
-			classPool.get("com.wurmonline.client.renderer.cell.PlayerTexture$PlayerTextureLoader").getMethod("run", Descriptor.ofMethod(CtPrimitiveType.voidType, new CtClass[0])).instrument(modArmorDeriveEditor);
+			classPool.get("com.wurmonline.client.renderer.cell.PlayerTexture$PlayerBodyTextureLoader").getMethod("run", Descriptor.ofMethod(CtPrimitiveType.voidType, new CtClass[0])).instrument(modArmorDeriveEditor);
 			
 		} catch (NotFoundException | CannotCompileException e) {
 			throw new HookException(e);
