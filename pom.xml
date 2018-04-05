@@ -3,7 +3,7 @@
 
 	<groupId>org.gotti.wurmunlimited</groupId>
 	<artifactId>client-modlauncher-parent</artifactId>
-	<version>0.8-SNAPSHOT</version>
+	<version>0.8</version>
 	<packaging>pom</packaging>
 
 	<name>client modlauncher parent</name>
@@ -45,7 +45,7 @@
 		<connection>scm:git:https://github.com/ago1024/WurmClientModLauncher.git</connection>
 		<developerConnection>scm:git:git@github.com:ago1024/WurmClientModLauncher.git</developerConnection>
 		<url>https://github.com/ago1024/WurmClientModLauncher</url>
-		<tag>HEAD</tag>
+		<tag>v0.8</tag>
 	</scm>
 
 	<build>
