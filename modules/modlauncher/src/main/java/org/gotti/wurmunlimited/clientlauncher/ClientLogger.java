@@ -21,7 +21,7 @@ public class ClientLogger {
 		
 		Handler handler = new StreamHandler(System.out, new SimpleFormatter()) {
 			@Override
-			public synchronized void publish(LogRecord record) {
+			public void publish(LogRecord record) {
 				
 				if (!CONSOLE_LOGGER.equals(record.getLoggerName())) {
 					try {
