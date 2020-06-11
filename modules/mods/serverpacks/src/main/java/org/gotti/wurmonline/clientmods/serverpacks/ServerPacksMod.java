@@ -36,6 +36,7 @@ import org.gotti.wurmunlimited.modloader.classhooks.HookException;
 import org.gotti.wurmunlimited.modloader.classhooks.HookManager;
 import org.gotti.wurmunlimited.modloader.classhooks.InvocationHandlerFactory;
 import org.gotti.wurmunlimited.modloader.interfaces.Initable;
+import org.gotti.wurmunlimited.modloader.interfaces.PreInitable;
 import org.gotti.wurmunlimited.modloader.interfaces.WurmClientMod;
 import org.gotti.wurmunlimited.modsupport.ModClient;
 import org.gotti.wurmunlimited.modsupport.console.ConsoleListener;
@@ -52,10 +53,12 @@ import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.NotFoundException;
 import javassist.bytecode.Descriptor;
+import javassist.CtMethod;
+import javassist.CannotCompileException;
+import javassist.expr.ExprEditor;
+import javassist.expr.MethodCall;
 
-
-public class ServerPacksMod implements WurmClientMod, Initable, ConsoleListener {
-	
+public class ServerPacksMod implements WurmClientMod, Initable, PreInitable, ConsoleListener {
 	private static final Options[] OPTIONS_DEFAULT = new Options[] {};
 
 	private static final Options[] OPTIONS_PREPEND = new Options[] { Options.PREPEND };
@@ -66,6 +69,59 @@ public class ServerPacksMod implements WurmClientMod, Initable, ConsoleListener 
 
 	private Logger logger = Logger.getLogger(ServerPacksMod.class.getName());
 	private Channel channel = null;
+
+	@Override
+	public void preInit() {
+		try {
+			ClassPool classPool = HookManager.getInstance().getClassPool();
+
+			CtClass ctResources = classPool.get("com.wurmonline.client.resources.Resources");
+			CtClass ctPack = classPool.get("com.wurmonline.client.resources.Pack");
+			CtClass ctPackResourceUrl = classPool.get("com.wurmonline.client.resources.PackResourceUrl");
+
+			CtMethod findPackMethod = new CtMethod(ctPack, "findPack", new CtClass[]{classPool.get("java.lang.String")}, ctResources);
+			findPackMethod.setBody("{" +
+					"        for (java.util.Iterator iterator = this.packs.iterator(); iterator.hasNext(); ) {" +
+					"            com.wurmonline.client.resources.Pack pack = (com.wurmonline.client.resources.Pack) iterator.next();" +
+					"            if (pack.getName().equals($1)) return pack;" +
+					"        }" +
+					"        return null;" +
+					"}"
+			);
+			ctResources.addMethod(findPackMethod);
+
+			ctPack.getMethod("init", "(Lcom/wurmonline/client/resources/Resources;)V")
+					.instrument(new ExprEditor() {
+						@Override
+						public void edit(MethodCall m) throws CannotCompileException {
+							if (m.getMethodName().equals("exists")) {
+								m.replace("$_ = $0.getFilePath().startsWith(\"~\") || $proceed();");
+							}
+						}
+					});
+
+			ctPack.getMethod("getResource", "(Ljava/lang/String;)Lcom/wurmonline/client/resources/ResourceUrl;")
+					.insertAfter("if ($_ != null && $_.getFilePath().startsWith(\"~\")) {" +
+							"    	int sep = $_.getFilePath().indexOf('/');" +
+							"       com.wurmonline.client.resources.Pack pack = com.wurmonline.client.WurmClientBase.getResourceManager()" +
+							"			.findPack($_.getFilePath().substring(1,sep));" +
+							"       if (pack!=null)" +
+							"       	$_ = new com.wurmonline.client.resources.PackResourceUrl(pack, $_.getFilePath().substring(sep+1));" +
+							"     };");
+
+			ctPackResourceUrl.getMethod("derive", "(Ljava/lang/String;)Lcom/wurmonline/client/resources/PackResourceUrl;")
+					.insertBefore("if ($1.startsWith(\"~\")) {\n" +
+							"			int sep = $1.indexOf('/');\n" +
+							"           com.wurmonline.client.resources.Pack pack = com.wurmonline.client.WurmClientBase.getResourceManager()" +
+							"				.findPack(newFilename.substring(1,sep));" +
+							"           if (pack!=null)" +
+							"           	return new com.wurmonline.client.resources.PackResourceUrl(pack, $1.substring(sep+1));" +
+							"		}");
+
+		} catch (NotFoundException | CannotCompileException e) {
+			throw new RuntimeException(e);
+		}
+	}
 
 	@Override
 	public void init() {
