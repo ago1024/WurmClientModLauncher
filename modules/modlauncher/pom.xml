@@ -9,7 +9,7 @@
 	<parent>
 		<groupId>org.gotti.wurmunlimited</groupId>
 		<artifactId>client-modlauncher-parent</artifactId>
-		<version>0.11-beta1</version>
+		<version>0.11</version>
 		<relativePath>../..</relativePath>
 	</parent>
 
@@ -22,12 +22,12 @@
 		<dependency>
 			<groupId>org.gotti.wurmunlimited</groupId>
 			<artifactId>common-client</artifactId>
-			<version>3594125</version>
+			<version>3721782</version>
 		</dependency>
 		<dependency>
 			<groupId>org.gotti.wurmunlimited</groupId>
 			<artifactId>client</artifactId>
-			<version>3594125</version>
+			<version>3721782</version>
 		</dependency>
 		<dependency>
 			<groupId>org.javassist</groupId>

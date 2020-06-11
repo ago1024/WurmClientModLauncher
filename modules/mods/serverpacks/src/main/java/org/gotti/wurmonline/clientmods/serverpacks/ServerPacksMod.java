@@ -37,10 +37,16 @@ import org.gotti.wurmunlimited.modloader.classhooks.HookManager;
 import org.gotti.wurmunlimited.modloader.classhooks.InvocationHandlerFactory;
 import org.gotti.wurmunlimited.modloader.interfaces.Initable;
 import org.gotti.wurmunlimited.modloader.interfaces.WurmClientMod;
+import org.gotti.wurmunlimited.modsupport.ModClient;
 import org.gotti.wurmunlimited.modsupport.console.ConsoleListener;
 import org.gotti.wurmunlimited.modsupport.console.ModConsole;
 import org.gotti.wurmunlimited.modsupport.packs.ModPacks;
 import org.gotti.wurmunlimited.modsupport.packs.ModPacks.Options;
+
+import com.wurmonline.client.renderer.ItemColorsXml;
+import com.wurmonline.client.renderer.effects.CustomParticleEffectXml;
+import com.wurmonline.client.renderer.terrain.TilePropertiesXml;
+import com.wurmonline.client.renderer.terrain.TerrainTexture;
 
 import javassist.ClassPool;
 import javassist.CtClass;
@@ -155,6 +161,10 @@ public class ServerPacksMod implements WurmClientMod, Initable, ConsoleListener 
 		boolean prepend = Boolean.parseBoolean(splitQuery(packUrl).getOrDefault("prepend", emptyList()).stream().map(v -> v == null ? "true" : v).reduce((a, b) -> b).orElse("false"));
 		if (ModPacks.addPack(file, prepend ? OPTIONS_PREPEND : OPTIONS_DEFAULT)) {
 			logger.log(Level.INFO, "Added server pack " + packId);
+			CustomParticleEffectXml.reloadParticlesFile();
+			ItemColorsXml.reloadItemColors(ModClient.getWorld());
+			TilePropertiesXml.reloadTiles();
+			TerrainTexture.reloadNormalMaps();
 		}
 	}
 
