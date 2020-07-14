@@ -114,8 +114,11 @@ public class ServerPacksMod implements WurmClientMod, Initable, PreInitable, Con
 							"			int sep = $1.indexOf('/');\n" +
 							"           com.wurmonline.client.resources.Pack pack = com.wurmonline.client.WurmClientBase.getResourceManager()" +
 							"				.findPack(newFilename.substring(1,sep));" +
-							"           if (pack!=null)" +
-							"           	return new com.wurmonline.client.resources.PackResourceUrl(pack, $1.substring(sep+1));" +
+							"           if (pack!=null) {" +
+							"				com.wurmonline.client.resources.PackResourceUrl nurl = new com.wurmonline.client.resources.PackResourceUrl(pack, $1.substring(sep+1));" +
+							"				if (!nurl.exists()) throw com.wurmonline.client.GameCrashedException.forFailure(\"Derived cross-pack resource \" + nurl + \" does not exist (source \" + this + \")\");" +
+							"           	return nurl;" +
+							"			}" +
 							"		}");
 
 		} catch (NotFoundException | CannotCompileException e) {
