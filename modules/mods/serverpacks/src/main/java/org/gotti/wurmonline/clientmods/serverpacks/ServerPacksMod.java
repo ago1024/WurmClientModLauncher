@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLDecoder;
@@ -90,6 +91,8 @@ public class ServerPacksMod implements WurmClientMod, Initable, PreInitable, Con
 			);
 			ctResources.addMethod(findPackMethod);
 
+			ctPackResourceUrl.getDeclaredField("rawFilePath").setModifiers(Modifier.PUBLIC);
+
 			ctPack.getMethod("init", "(Lcom/wurmonline/client/resources/Resources;)V")
 					.instrument(new ExprEditor() {
 						@Override
@@ -101,12 +104,12 @@ public class ServerPacksMod implements WurmClientMod, Initable, PreInitable, Con
 					});
 
 			ctPack.getMethod("getResource", "(Ljava/lang/String;)Lcom/wurmonline/client/resources/ResourceUrl;")
-					.insertAfter("if ($_ != null && $_.getFilePath().startsWith(\"~\")) {" +
+					.insertAfter("if ($_ != null && ($_ instanceof com.wurmonline.client.resources.PackResourceUrl) && $_.getFilePath().startsWith(\"~\")) {" +
 							"    	int sep = $_.getFilePath().indexOf('/');" +
 							"       com.wurmonline.client.resources.Pack pack = com.wurmonline.client.WurmClientBase.getResourceManager()" +
 							"			.findPack($_.getFilePath().substring(1,sep));" +
 							"       if (pack!=null)" +
-							"       	$_ = new com.wurmonline.client.resources.PackResourceUrl(pack, $_.getFilePath().substring(sep+1));" +
+							"       	$_ = new com.wurmonline.client.resources.PackResourceUrl(pack, ((com.wurmonline.client.resources.PackResourceUrl)$_).rawFilePath.substring(sep+1).replace(\"~[local]/\",\"~\"+this.name+\"/\"));" +
 							"     };");
 
 			ctPackResourceUrl.getMethod("derive", "(Ljava/lang/String;)Lcom/wurmonline/client/resources/PackResourceUrl;")
