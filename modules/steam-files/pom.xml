@@ -108,6 +108,40 @@
 								<argument>--include</argument>
 								<argument>SteamJni</argument>
 							</arguments>
+							<additionalClasspathElements>
+								<additionalClasspathElement>${project.build.directory}/steam/WurmLauncher/lib/client-modlauncher-parent-0.10.1.jar</additionalClasspathElement>
+								<additionalClasspathElement>${project.build.directory}/steam/WurmLauncher/lib/commons-codec-1.9.jar</additionalClasspathElement>
+								<additionalClasspathElement>${project.build.directory}/steam/WurmLauncher/lib/commons-logging-1.2.jar</additionalClasspathElement>
+								<additionalClasspathElement>${project.build.directory}/steam/WurmLauncher/lib/hamcrest-core-1.3.jar</additionalClasspathElement>
+								<additionalClasspathElement>${project.build.directory}/steam/WurmLauncher/lib/httpclient-4.5.3.jar</additionalClasspathElement>
+								<additionalClasspathElement>${project.build.directory}/steam/WurmLauncher/lib/httpcore-4.4.6.jar</additionalClasspathElement>
+								<additionalClasspathElement>${project.build.directory}/steam/WurmLauncher/lib/irclib-1.10.jar</additionalClasspathElement>
+								<additionalClasspathElement>${project.build.directory}/steam/WurmLauncher/lib/javassist-3.23.1.jar</additionalClasspathElement>
+								<additionalClasspathElement>${project.build.directory}/steam/WurmLauncher/lib/jbullet-1.0.0.jar</additionalClasspathElement>
+								<additionalClasspathElement>${project.build.directory}/steam/WurmLauncher/lib/jinput-2.0.5.jar</additionalClasspathElement>
+								<additionalClasspathElement>${project.build.directory}/steam/WurmLauncher/lib/jinput-platform-2.0.5-natives-linux.jar</additionalClasspathElement>
+								<additionalClasspathElement>${project.build.directory}/steam/WurmLauncher/lib/jinput-platform-2.0.5-natives-osx.jar</additionalClasspathElement>
+								<additionalClasspathElement>${project.build.directory}/steam/WurmLauncher/lib/jinput-platform-2.0.5-natives-windows.jar</additionalClasspathElement>
+								<additionalClasspathElement>${project.build.directory}/steam/WurmLauncher/lib/jme-collada-binding-1.0.0.jar</additionalClasspathElement>
+								<additionalClasspathElement>${project.build.directory}/steam/WurmLauncher/lib/jogg-0.0.7.jar</additionalClasspathElement>
+								<additionalClasspathElement>${project.build.directory}/steam/WurmLauncher/lib/jorbis-0.0.17.jar</additionalClasspathElement>
+								<additionalClasspathElement>${project.build.directory}/steam/WurmLauncher/lib/joxsi-1.0.0.jar</additionalClasspathElement>
+								<additionalClasspathElement>${project.build.directory}/steam/WurmLauncher/lib/jsquish-2.0.0.jar</additionalClasspathElement>
+								<additionalClasspathElement>${project.build.directory}/steam/WurmLauncher/lib/junit-4.11.jar</additionalClasspathElement>
+								<additionalClasspathElement>${project.build.directory}/steam/WurmLauncher/lib/jutils-1.0.0.jar</additionalClasspathElement>
+								<additionalClasspathElement>${project.build.directory}/steam/WurmLauncher/lib/JZipUpdate-0.9.1.jar</additionalClasspathElement>
+								<additionalClasspathElement>${project.build.directory}/steam/WurmLauncher/lib/lwjgl-2.9.1.jar</additionalClasspathElement>
+								<additionalClasspathElement>${project.build.directory}/steam/WurmLauncher/lib/lwjgl_util-2.9.1.jar</additionalClasspathElement>
+								<additionalClasspathElement>${project.build.directory}/steam/WurmLauncher/lib/lwjgl-natives-windows-2.9.1.jar</additionalClasspathElement>
+								<additionalClasspathElement>${project.build.directory}/steam/WurmLauncher/lib/lwjgl-platform-2.9.1-natives-linux.jar</additionalClasspathElement>
+								<additionalClasspathElement>${project.build.directory}/steam/WurmLauncher/lib/lwjgl-platform-2.9.1-natives-osx.jar</additionalClasspathElement>
+								<additionalClasspathElement>${project.build.directory}/steam/WurmLauncher/lib/lwjgl-platform-2.9.1-natives-windows.jar</additionalClasspathElement>
+								<additionalClasspathElement>${project.build.directory}/steam/WurmLauncher/lib/pngdecoder-1.0.jar</additionalClasspathElement>
+								<additionalClasspathElement>${project.build.directory}/steam/WurmLauncher/lib/slick-util-b208.jar</additionalClasspathElement>
+								<additionalClasspathElement>${project.build.directory}/steam/WurmLauncher/lib/SteamClientJni.jar</additionalClasspathElement>
+								<additionalClasspathElement>${project.build.directory}/steam/WurmLauncher/lib/vecmath-1.5.2.jar</additionalClasspathElement>
+								<additionalClasspathElement>${project.build.directory}/steam/WurmLauncher/lib/WurmUnlimitedCommon-1.9.2.7.jar</additionalClasspathElement>
+							</additionalClasspathElements>
 						</configuration>
 					</execution>
 				</executions>
