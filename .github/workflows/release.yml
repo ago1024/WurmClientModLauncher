@@ -46,6 +46,7 @@ jobs:
           for asset in modules/dist/target/dist-${{ steps.get_version.outputs.version }}/*-${{ steps.get_version.outputs.version }}.zip; do
             assets+=("-a" "$asset")
           done
-          hub release edit "${assets[@]}" "${{ github.ref }}"
+          tag_name="${GITHUB_REF##*/}"
+          hub release edit "${assets[@]}" "$tag_name"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
