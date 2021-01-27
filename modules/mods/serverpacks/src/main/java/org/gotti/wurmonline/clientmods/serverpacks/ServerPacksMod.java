@@ -234,8 +234,10 @@ public class ServerPacksMod implements WurmClientMod, Initable, PreInitable, Con
 		PackDownloader downloader = new PackDownloader(packUrl, packId) {
 			@Override
 			protected void done(String packId) {
-				enableDownloadedPack(packId, packUrl);
-				refreshModels();
+				ModClient.runTask(() -> {
+					enableDownloadedPack(packId, packUrl);
+					refreshModels();
+				});
 			}
 		};
 
