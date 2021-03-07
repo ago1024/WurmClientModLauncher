@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.jar.JarFile;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -78,6 +79,8 @@ public class ModPacks {
 
 	private static Method jarPackGetResource;
 
+	private static Field jarPackJarFile;
+
 	private static Field resourceResolvedResources;
 
 	private static Field resourcesUnresolvedResources;
@@ -89,8 +92,14 @@ public class ModPacks {
 	private static Field playerCellRenderableTextureDirty;
 
 	private static Field playerBodyRenderableTextureDirty;
-	
-	
+
+	private static Class<?> jarResourceUrl;
+
+	private static Field jarResourceUrlPack;
+
+	// Track JarPacks created for a absolute pack file locations
+	private static HashMap<String, Object> addedPacks = new HashMap<>();
+
 	public static void preInit() {
 		try {
 			// com.wurmonline.client.resources.textures.PlayerTextureBuilder.loadImage(ResourceUrl, String)
@@ -125,12 +134,15 @@ public class ModPacks {
 			jarPackConstructor = jarPackClass.getDeclaredConstructor(new Class<?>[] { File.class });
 			jarPackInit = jarPackClass.getSuperclass().getDeclaredMethod("init", new Class<?>[] { Resources.class });
 			jarPackGetResource = jarPackClass.getSuperclass().getDeclaredMethod("getResource", new Class<?>[] { String.class });
+			jarPackJarFile = ReflectionUtil.getField(jarPackClass, "jarFile");
 			resourceResolvedResources = ReflectionUtil.getField(Resources.class, "resolvedResources");
 			resourcesUnresolvedResources = ReflectionUtil.getField(Resources.class, "unresolvedResources");
 			resourcesPacks = ReflectionUtil.getField(Resources.class, "packs");
 			cellRendererTickRenderables = ReflectionUtil.getField(CellRenderer.class, "tickRenderables");
 			playerBodyRenderableTextureDirty = ReflectionUtil.getField(PlayerBodyRenderable.class, "textureDirty");
 			playerCellRenderableTextureDirty = ReflectionUtil.getField(PlayerCellRenderable.class, "textureDirty");
+			jarResourceUrl = Class.forName("com.wurmonline.client.resources.PackResourceUrl");
+			jarResourceUrlPack = ReflectionUtil.getField(jarResourceUrl, "pack");
 		} catch (ClassNotFoundException | NoSuchMethodException | SecurityException | NoSuchFieldException e) {
 			logger.log(Level.SEVERE, e.getMessage(), e);
 			throw new HookException(e);
@@ -145,6 +157,13 @@ public class ModPacks {
 		}
 	}
 
+	/**
+	 * Add a new pack file
+	 * 
+	 * @param jarFile Pack file
+	 * @param options options
+	 * @return true if the pack was added successfully
+	 */
 	public static boolean addPack(File jarFile, Options... options) {
 
 		Set<Options> o = getOptionSet(options);
@@ -154,12 +173,60 @@ public class ModPacks {
 
 			addPack(jarPack, o);
 
+			addedPacks.put(jarFile.getAbsoluteFile().toString(), jarPack);
+
 			updateServerData(jarPack, o);
 
 			return true;
 		} catch (Exception e) {
 			logger.log(Level.SEVERE, null, e);
 			return false;
+		}
+	}
+	
+	/**
+	 * Close a pack. Closes a pack if the file has been registered with addPack before.
+	 * 
+	 * @param file
+	 */
+	public static void closePack(File file) {
+		try {
+			Resources resources = WurmClientBase.getResourceManager();
+			
+			Object addedPack = addedPacks.remove(file.getAbsoluteFile().toString());
+			if (addedPack == null) {
+				// nothing to do
+				return;
+			}
+			
+			// close the JarFile
+			JarFile jarFile = ReflectionUtil.<JarFile>getPrivateField(addedPack, jarPackJarFile);
+			jarFile.close();
+			
+			// remove the pack from the ResourceManager
+			List<Object> packs = ReflectionUtil.<List<Object>> getPrivateField(resources, resourcesPacks);
+			packs.remove(addedPack);
+			
+			// Cleanup resolved resources
+			Map<String, ResourceUrl> resolved = ReflectionUtil.<Map<String, ResourceUrl>> getPrivateField(resources, resourceResolvedResources);
+			Map<String, ResourceUrl> oldResolved = new HashMap<>(resolved);
+
+			for (java.util.Map.Entry<String, ResourceUrl> entry : oldResolved.entrySet()) {
+				ResourceUrl oldUrl = entry.getValue();
+				if (jarResourceUrl.isInstance(oldUrl)) {
+					Object urlPack = ReflectionUtil.getPrivateField(oldUrl, jarResourceUrlPack);
+					// old resource is from the pack to close
+					if (urlPack == addedPack) {
+						// remove the resolved entry
+						resolved.remove(entry.getKey());
+						// resolve the entry from the remaining packs
+						resources.getResource(entry.getKey());
+					}
+				}
+			}
+			
+		} catch (Exception e) {
+			logger.log(Level.SEVERE, null, e);
 		}
 	}
 

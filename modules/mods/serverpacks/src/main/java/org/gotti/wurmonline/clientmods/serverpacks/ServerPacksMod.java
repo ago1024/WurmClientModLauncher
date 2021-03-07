@@ -17,6 +17,7 @@ import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.Arrays;
 import java.util.Collections;
@@ -232,11 +233,19 @@ public class ServerPacksMod implements WurmClientMod, Initable, PreInitable, Con
 
 	private void downloadPack(URL packUrl, String packId) {
 		PackDownloader downloader = new PackDownloader(packUrl, packId) {
+			
 			@Override
-			protected void done(String packId) {
+			protected void done(String packId, Path tempFile) {
 				ModClient.runTask(() -> {
-					enableDownloadedPack(packId, packUrl);
-					refreshModels();
+					try {
+						Path packFile = Paths.get("packs", getPackName(packId));
+						ModPacks.closePack(packFile.toFile());
+						Files.move(tempFile, packFile, StandardCopyOption.REPLACE_EXISTING);
+						enableDownloadedPack(packId, packUrl);
+						refreshModels();
+					} catch (IOException e) {
+						logger.log(Level.SEVERE, e.getMessage(), e);
+					}
 				});
 			}
 		};

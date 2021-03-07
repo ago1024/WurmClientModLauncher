@@ -22,21 +22,19 @@ public abstract class PackDownloader implements Runnable {
 		this.packUrl = packUrl;
 		this.packId = packId;
 	}
-
-	protected abstract void done(String packId);
+	
+	protected abstract void done(String packId, Path tempFile);
 
 	@Override
 	public void run() {
 		try {
-			Path tmpName = Paths.get("packs", packId);
-			Path packName = Paths.get("packs", packId + ".jar");
+			Path tmpName = Paths.get("packs", packId + ".tmp");
 
 			try (InputStream is = packUrl.openStream()) {
 				Files.copy(is, tmpName, StandardCopyOption.REPLACE_EXISTING);
 			}
-			Files.move(tmpName, packName, StandardCopyOption.REPLACE_EXISTING);
 
-			done(packId);
+			done(packId, tmpName);
 
 		} catch (IOException e) {
 			logger.log(Level.SEVERE, e.getMessage(), e);
