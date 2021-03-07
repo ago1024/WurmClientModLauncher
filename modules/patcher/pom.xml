@@ -7,7 +7,7 @@
 	<parent>
 		<groupId>org.gotti.wurmunlimited</groupId>
 		<artifactId>client-modlauncher-parent</artifactId>
-		<version>0.15-SNAPSHOT</version>
+		<version>0.15</version>
 		<relativePath>../..</relativePath>
 	</parent>
 
