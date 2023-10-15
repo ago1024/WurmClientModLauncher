@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -16,6 +17,9 @@ import java.util.jar.JarFile;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.wurmonline.client.renderer.gui.HeadsUpDisplay;
+import com.wurmonline.client.renderer.gui.StatusEffect.StatusEffectXmlParser;
+import com.wurmonline.client.renderer.gui.StatusEffectComponent;
 import org.gotti.wurmunlimited.modloader.ReflectionUtil;
 import org.gotti.wurmunlimited.modloader.classhooks.HookException;
 import org.gotti.wurmunlimited.modloader.classhooks.HookManager;
@@ -100,6 +104,8 @@ public class ModPacks {
 	// Track JarPacks created for a absolute pack file locations
 	private static HashMap<String, Object> addedPacks = new HashMap<>();
 
+	private static final ArrayList<FailedStatusEffect> failedStatusEffects = new ArrayList<>();
+
 	public static void preInit() {
 		try {
 			// com.wurmonline.client.resources.textures.PlayerTextureBuilder.loadImage(ResourceUrl, String)
@@ -122,7 +128,17 @@ public class ModPacks {
 			
 			classPool.get("com.wurmonline.client.resources.textures.PlayerTextureBuilderGL").getMethod("generateTexture", Descriptor.ofMethod(CtPrimitiveType.voidType, new CtClass[0])).instrument(modArmorDeriveEditor);
 			classPool.get("com.wurmonline.client.renderer.cell.PlayerTexture$PlayerBodyTextureLoader").getMethod("run", Descriptor.ofMethod(CtPrimitiveType.voidType, new CtClass[0])).instrument(modArmorDeriveEditor);
-			
+
+			classPool.get("com.wurmonline.client.renderer.gui.StatusEffectComponent")
+					.getMethod("addStatusEffect", Descriptor.ofMethod(CtPrimitiveType.voidType, new CtClass[]{CtPrimitiveType.longType, CtPrimitiveType.intType, CtPrimitiveType.intType, classPool.get("java.lang.String")}))
+					.instrument(new ExprEditor(){
+						@Override
+						public void edit(MethodCall m) throws CannotCompileException {
+							if(m.getMethodName().equals("updateSize")) {
+								m.replace("$_ = $proceed($$); if(info==null) org.gotti.wurmunlimited.modsupport.packs.ModPacks.addFailedStatusEffect(id, typeId, duration, name);");
+							}
+						}
+					});
 		} catch (NotFoundException | CannotCompileException e) {
 			throw new HookException(e);
 		}
@@ -283,6 +299,7 @@ public class ModPacks {
 		resolved.clear();
 
 		boolean reloadIcons = false;
+		boolean reloadStatusEffects = false;
 		for (java.util.Map.Entry<String, ResourceUrl> entry : oldResolved.entrySet()) {
 
 			ResourceUrl oldUrl = entry.getValue();
@@ -292,6 +309,8 @@ public class ModPacks {
 
 				if (Arrays.asList(IconConstants.ICON_SHEET_FILE_NAMES).contains(entry.getKey())) {
 					reloadIcons = true;
+				} else if ("buff.xml".equals(entry.getKey())) {
+					reloadStatusEffects = true;
 				} else {
 					ResourceTextureLoader.reload(oldUrl, newUrl);
 				}
@@ -301,6 +320,29 @@ public class ModPacks {
 		if (reloadIcons) {
 			IconLoader.initIcons();
 			IconLoader.clear();
+		}
+
+		if (reloadStatusEffects) {
+			try {
+				final WurmClientBase clientBase = ReflectionUtil.getPrivateField(WurmClientBase.class, ReflectionUtil.getField(WurmClientBase.class, "clientObject"));
+				final HeadsUpDisplay hud = ReflectionUtil.getPrivateField(clientBase, ReflectionUtil.getField(WurmClientBase.class, "hud"));
+				Object statusEffectLibrary = StatusEffectXmlParser.loadXml();
+				ReflectionUtil.setPrivateField(hud.getStatusEffectComponent(), ReflectionUtil.getField(StatusEffectComponent.class, "statusEffectLibrary"), statusEffectLibrary);
+
+				// will send this many effects, since addStatusEffect might modify failedStatusEffects
+				final int numEffects = failedStatusEffects.size();
+				for (int i = 0; i < numEffects; ++i) {
+					FailedStatusEffect fSE = failedStatusEffects.remove(0);
+
+					int remainingDuration = (int)(fSE.sentAtSeconds + fSE.duration - System.currentTimeMillis()/1000);
+					if (remainingDuration > 0) {
+						hud.getStatusEffectComponent().addStatusEffect(fSE.id, fSE.typeId, remainingDuration, fSE.name);
+					}
+				}
+			} catch (NoSuchFieldException e) {
+				logger.log(Level.SEVERE, e.getMessage(), e);
+				throw new HookException(e);
+			}
 		}
 	}
 
@@ -361,4 +403,23 @@ public class ModPacks {
 		}
 	}
 
+	public static void addFailedStatusEffect(final long id, final int typeId, final int duration, final String name) {
+		failedStatusEffects.add(new FailedStatusEffect(System.currentTimeMillis()/1000, id, typeId, duration, name));
+	}
+
+	private static class FailedStatusEffect {
+		public final long sentAtSeconds;
+		public final long id;
+		public final int typeId;
+		public final int duration;
+		public final String name;
+
+		public FailedStatusEffect(final long sentAtSeconds, final long id, final int typeId, final int duration, final String name) {
+			this.sentAtSeconds = sentAtSeconds;
+			this.id = id;
+			this.typeId = typeId;
+			this.duration = duration;
+			this.name = name;
+		}
+	}
 }
