@@ -16,6 +16,9 @@ import java.util.jar.JarFile;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.wurmonline.client.renderer.gui.HeadsUpDisplay;
+import com.wurmonline.client.renderer.gui.StatusEffect.StatusEffectXmlParser;
+import com.wurmonline.client.renderer.gui.StatusEffectComponent;
 import org.gotti.wurmunlimited.modloader.ReflectionUtil;
 import org.gotti.wurmunlimited.modloader.classhooks.HookException;
 import org.gotti.wurmunlimited.modloader.classhooks.HookManager;
@@ -283,6 +286,7 @@ public class ModPacks {
 		resolved.clear();
 
 		boolean reloadIcons = false;
+		boolean reloadStatusEffects = false;
 		for (java.util.Map.Entry<String, ResourceUrl> entry : oldResolved.entrySet()) {
 
 			ResourceUrl oldUrl = entry.getValue();
@@ -292,6 +296,8 @@ public class ModPacks {
 
 				if (Arrays.asList(IconConstants.ICON_SHEET_FILE_NAMES).contains(entry.getKey())) {
 					reloadIcons = true;
+				} else if ("buff.xml".equals(entry.getKey())) {
+					reloadStatusEffects = true;
 				} else {
 					ResourceTextureLoader.reload(oldUrl, newUrl);
 				}
@@ -301,6 +307,18 @@ public class ModPacks {
 		if (reloadIcons) {
 			IconLoader.initIcons();
 			IconLoader.clear();
+		}
+
+		if (reloadStatusEffects) {
+			try {
+				final WurmClientBase clientBase = ReflectionUtil.getPrivateField(WurmClientBase.class, ReflectionUtil.getField(WurmClientBase.class, "clientObject"));
+				final HeadsUpDisplay hud = ReflectionUtil.getPrivateField(clientBase, ReflectionUtil.getField(WurmClientBase.class, "hud"));
+				Object statusEffectLibrary = StatusEffectXmlParser.loadXml();
+				ReflectionUtil.setPrivateField(hud.getStatusEffectComponent(), ReflectionUtil.getField(StatusEffectComponent.class, "statusEffectLibrary"), statusEffectLibrary);
+			} catch (NoSuchFieldException e) {
+				logger.log(Level.SEVERE, e.getMessage(), e);
+				throw new HookException(e);
+			}
 		}
 	}
 
